@@ -1,51 +1,97 @@
-Schema for Song Play Analysis
-Using the song and log datasets, you'll need to create a star schema optimized for queries on song play analysis. This includes the following tables.
+# Sparkify ETL
 
-Fact Table
-songplays - records in log data associated with song plays i.e. records with page NextSong
-songplay_id, start_time, user_id, level, song_id, artist_id, session_id, location, user_agent
-Dimension Tables
-users - users in the app
-user_id, first_name, last_name, gender, level
-songs - songs in music database
-song_id, title, artist_id, year, duration
-artists - artists in music database
-artist_id, name, location, lattitude, longitude
-time - timestamps of records in songplays broken down into specific units
-start_time, hour, day, week, month, year, weekday
-Project Template
-To get started with the project, go to the workspace on the next page, where you'll find the project template files. You can work on your project and submit your work through this workspace. Alternatively, you can download the project template files from the Resources folder if you'd like to develop your project locally.
+Sparkify ETL is a jupyter workspace for extracting JSON data, transforming it into database-ready chunks, and loading it into our Postgresql RDBMS.
 
-In addition to the data files, the project workspace includes six files:
+# Goal
+Sparkify ETL will read files from `data/songs` and `data/logs`, transform the data if necessary, and add them to the proper places in the schema.
 
-test.ipynb displays the first few rows of each table to let you check your database.
-create_tables.py drops and creates your tables. You run this file to reset your tables before each time you run your ETL scripts.
-etl.ipynb reads and processes a single file from song_data and log_data and loads the data into your tables. This notebook contains detailed instructions on the ETL process for each of the tables.
-etl.py reads and processes files from song_data and log_data and loads them into your tables. You can fill this out based on your work in the ETL notebook.
-sql_queries.py contains all your sql queries, and is imported into the last three files above.
-README.md provides discussion on your project.
-Project Steps
-Below are steps you can follow to complete the project:
+# Raw Data
+*Song data*
+Song data comes from [Million Song Dataset](http://millionsongdataset.com/).
+Below is an example of what Song data would looke like
+```
+{"num_songs": 1, "artist_id": "ARJIE2Y1187B994AB7", "artist_latitude": null, "artist_longitude": null, "artist_location": "", "artist_name": "Line Renaud", "song_id": "SOUPIRU12A6D4FA1E1", "title": "Der Kleine Dompfaff", "duration": 152.92036, "year": 0}
+```
 
-Create Tables
-Write CREATE statements in sql_queries.py to create each table.
-Write DROP statements in sql_queries.py to drop each table if it exists.
-Run create_tables.py to create your database and tables.
-Run test.ipynb to confirm the creation of your tables with the correct columns. Make sure to click "Restart kernel" to close the connection to the database after running this notebook.
-Build ETL Processes
-Follow instructions in the etl.ipynb notebook to develop ETL processes for each table. At the end of each table section, or at the end of the notebook, run test.ipynb to confirm that records were successfully inserted into each table. Remember to rerun create_tables.py to reset your tables before each time you run this notebook.
+*Log data*
+Log data comes from this [event simulator](https://github.com/Interana/eventsim).
+Below is an example of what Log data would looke like
+```
+{"artist": "Pavement", "auth": "Logged In", "firstName": "Sylvie", "gender": "F", "itemInSession": "0", "lastName": "Cruz", "length": 277.15873, "level": "free", "location": "Washington-Arlington-Alexandria-DC-VA-MD-WV", "method": "PUT", "page": "NextSong", "registration": 1.540266e+12, "sessionId": 345, "song": "Mercy:The Laundromat", "status": 200, "ts": 1541990258796, "userAgent": "Mozilla/5.0(Macintosh;Intel MacOs...", "userId": 10}
+```
 
-Build ETL Pipeline
-Use what you've completed in etl.ipynb to complete etl.py, where you'll process the entire datasets. Remember to run create_tables.py before running etl.py to reset your tables. Run test.ipynb to confirm your records were successfully inserted into each table.
+# Schema Design
+Star schema-style was chosen to provide easy to access analytics without the need for complex multi-joins.
 
-Document Process
-Do the following steps in your README.md file.
+*Levels*: tiers of paid user access
+- level     -- allows us to have the flexibility of an enum with the added ability to remove or alter values
 
-Discuss the purpose of this database in the context of the startup, Sparkify, and their analytical goals.
-State and justify your database schema design and ETL pipeline.
-[Optional] Provide example queries and results for song play analysis.
-Here's a guide on Markdown Syntax.
+*Users*:  users in the app
+- user_id -- Primary Key
+- first_name
+- last_name
+- gender
+- level -- Reference to `levels.level`
 
-NOTE: You will not be able to run test.ipynb, etl.ipynb, or etl.py until you have run create_tables.py at least once to create the sparkifydb database, which these other files connect to.
-# postgres_etl
-# postgres_etl
+*Time*: timestamps of records in `songplays` broken down into specific units
+- start_time -- Primary Key
+- hour
+- day
+- week
+- month
+- year
+- weekday
+
+*Artists*: artists in music database
+- artist_id -- Primary Key
+- name
+- location
+- lattitude
+- longitude
+
+*Songs*: songs in music database
+- song_id -- Primary Key
+- title
+- artist_id
+- year
+- duration
+- index_songs_on_artist_id_and_title -- Unique index
+
+*Songplays*: records in log data associated with song plays i.e. records with page `NextSong`
+- songplay_id -- Primary Key
+- start_time -- Reference to `times.start_time`
+- user_id -- Reference to `users.user_id`
+- level -- Reference to `levels.level`
+- song_id -- Reference to `songs.song_id`
+- artist_id
+- session_id
+- location
+- user_agent
+- index_songplays_on_start_time_and_user_id_and_session_id -- Unique Index
+
+### Tech
+
+Dillinger uses a number of open source projects to work properly:
+
+* [Conda] - Because I didn't make the original workspace!
+* [Pysopg2] - the holy grail of postgresql drivers for python
+
+### Installation
+
+Sparkify requires [Python3](https://www.python.org/downloads/release/python-363/) v3.6.3+ to run.
+
+Install the dependencies and then:
+
+Create the DB and tables 
+```sh
+$ python create_tables.py
+```
+Run the script
+```sh
+$ python etl.py
+```
+
+License
+----
+
+MIT
