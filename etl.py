@@ -6,6 +6,18 @@ from sql_queries import *
 
 
 def process_song_file(cur, filepath):
+    """
+    The Function accepts files in JSON format, reads song details and artist details; 
+    finally inserts records to songs and artists tables.
+
+    Args:
+        cur: Database cursor.
+        filepath: JSON file's location.
+
+    Returns:
+        None
+    """
+    
     df = pd.read_json(filepath, typ='series')
     song_data = df[['song_id', 'title', 'artist_id', 'year', 'duration']].values
     artist_data = df[['artist_id', 'artist_name', 'artist_location', 'artist_latitude', 'artist_longitude']].values
@@ -16,6 +28,18 @@ def process_song_file(cur, filepath):
 
 
 def process_log_file(cur, filepath):
+    """
+    The Function accepts files in JSON format, reads time details and user details; 
+    inserts records to songs and artists tables; finally inserts records to songplays table.
+
+    Args:
+        cur: Database cursor.
+        filepath: JSON file's location.
+
+    Returns:
+        None
+    """
+    
     df = pd.read_json(filepath, lines=True)
     df = df.loc[df['page'] == 'NextSong']
     t = pd.Series(pd.to_datetime(df['ts'], unit='ms'))
@@ -51,11 +75,27 @@ def process_log_file(cur, filepath):
         except TypeError as te:
             songid, artistid = None, None
 
-        songplay_data = (row.ts, row.userId, row.level, songid, artistid, row.sessionId, row.location, row.userAgent)
+        songplay_data = (int(row.ts//1000), row.userId, row.level, songid, artistid, row.sessionId, row.location, row.userAgent)
         cur.execute(songplay_table_insert, songplay_data)
 
 
 def process_data(cur, conn, filepath, func):
+    """
+    The Function accepts the proper psycopg2 parameters for the database, the base filepath
+    for the selected directory and the appropriate function to call on an individual file
+    in said directory; used to iteratively call a function to process and store data within
+    the associated filepath;
+
+    Args:
+        cur: Database cursor.
+        conn: Database connection.
+        filepath: JSON file's location.
+        func: Function to call on the json data within the filepath.
+
+    Returns:
+        None
+    """
+    
     # get all files matching extension from directory
     all_files = []
     for root, dirs, files in os.walk(filepath):

@@ -11,7 +11,7 @@ level_table_drop = "DROP TABLE IF EXISTS levels"
 
 songplay_table_create = ("""
     CREATE TABLE IF NOT EXISTS songplays(
-        songplay_id bigserial,
+        songplay_id bigserial PRIMARY KEY,
         start_time bigint NOT NULL,
         user_id varchar NOT NULL,
         level varchar NOT NULL,
@@ -29,9 +29,8 @@ songplay_table_create = ("""
         FOREIGN KEY (song_id) REFERENCES songs(song_id)
         ON DELETE CASCADE,
         FOREIGN KEY (artist_id) REFERENCES artists(artist_id)
-        ON DELETE CASCADE,
-        PRIMARY KEY (start_time, user_id, session_id)
-   )
+        ON DELETE CASCADE
+   );
 """)
 
 user_table_create = ("""
@@ -41,7 +40,7 @@ user_table_create = ("""
         last_name varchar,
         gender varchar, 
         level varchar
-    )
+    );
 """)
 
 song_table_create = ("""
@@ -51,7 +50,7 @@ song_table_create = ("""
         artist_id varchar,
         year int,
         duration numeric
-    )
+    );
 """)
 
 artist_table_create = ("""
@@ -61,7 +60,7 @@ artist_table_create = ("""
         location varchar,
         latitude numeric,
         longitude numeric
-    )
+    );
 """)
 
 time_table_create = ("""
@@ -73,40 +72,33 @@ time_table_create = ("""
         month double precision,
         year double precision,
         weekday double precision
-    )
+    );
 """)
 
 level_table_create = ("""
     CREATE TABLE IF NOT EXISTS levels(
         level varchar PRIMARY KEY
-    )
+    );
 """)
 
 # INSERT RECORDS
 songplay_table_insert = ("""
     INSERT INTO songplays (start_time, user_id, level, song_id, artist_id, session_id, location, user_agent)
     VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-    ON CONFLICT (start_time, user_id, session_id) DO NOTHING
+    ON CONFLICT (start_time, user_id, session_id) DO NOTHING;
 """)
 
 user_table_insert = ("""
     INSERT INTO users (user_id, first_name, last_name, gender, level)
     VALUES (%s, %s, %s, %s, %s)
-    ON CONFLICT (user_id) DO UPDATE SET 
-    first_name=EXCLUDED.first_name,
-    last_name=EXCLUDED.last_name,
-    gender=EXCLUDED.gender,
-    level=EXCLUDED.level
+    ON CONFLICT (user_id) DO UPDATE SET
+    level=EXCLUDED.level;
 """)
 
 song_table_insert = ("""
     INSERT INTO songs (song_id, title, artist_id, year, duration)
     VALUES (%s, %s, %s, %s, %s)
-    ON CONFLICT (song_id) DO UPDATE SET 
-    title=EXCLUDED.title,
-    artist_id=EXCLUDED.artist_id,
-    year=EXCLUDED.year,
-    duration=EXCLUDED.duration
+    ON CONFLICT (song_id) DO NOTHING;
 """)
 
 artist_table_insert = ("""
@@ -116,32 +108,26 @@ artist_table_insert = ("""
     name=EXCLUDED.name,
     location=EXCLUDED.location,
     latitude=EXCLUDED.latitude,
-    longitude=EXCLUDED.longitude
+    longitude=EXCLUDED.longitude;
 """)
 
 
 time_table_insert = ("""
     INSERT INTO time (start_time, hour, day, week, month, year, weekday)
     VALUES (%s, %s, %s, %s, %s, %s, %s)
-    ON CONFLICT (start_time) DO UPDATE SET 
-    hour=EXCLUDED.hour,
-    day=EXCLUDED.day,
-    week=EXCLUDED.week,
-    month=EXCLUDED.month,
-    year=EXCLUDED.year,
-    weekday=EXCLUDED.weekday
+    ON CONFLICT (start_time) DO NOTHING;
 """)
 
 _level_free_value_insert = ("""
     INSERT INTO levels (level)
     VALUES ('free')
-    ON CONFLICT (level) DO NOTHING
+    ON CONFLICT (level) DO NOTHING;
 """)
 
 _level_paid_value_insert = ("""
     INSERT INTO levels (level)
     VALUES ('paid')
-    ON CONFLICT (level) DO NOTHING
+    ON CONFLICT (level) DO NOTHING;
 """)
 
 _songplay_index_insert = ("""
